@@ -1,0 +1,14 @@
+[Unit]
+Description=Gazete Ozeti - son 12 ayi yavasca doldur
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/gazete
+ExecStart=/usr/bin/python3.12 -m gazete.collect geriye
+SuccessExitStatus=75
+TimeoutStartSec=60min
+Nice=15
+# Isınmayı azaltmak için CPU sınırı
+CPUQuota=60%

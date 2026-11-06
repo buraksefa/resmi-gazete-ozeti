@@ -1,0 +1,15 @@
+[Unit]
+Description=Gazete Ozeti - taranmis PDF sayfalarini OCR (tesseract, Turkce)
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/gazete
+ExecStart=/usr/bin/python3.12 -m gazete.collect ocr
+# Belge arasinda 45 dk'da durur; tek belge uzun surebilir
+TimeoutStartSec=6h
+Nice=15
+# Isınmayı azaltmak için: tesseract tek iş parçacığı; sayfa arası dinlenme config.OCR_DINLENME.
+# CPUQuota yalnız cpu denetleyicisi kullanıcıya devredilirse işler (sudo ile Delegate=cpu).
+CPUQuota=50%
+Environment=OMP_THREAD_LIMIT=1
+IOSchedulingClass=idle

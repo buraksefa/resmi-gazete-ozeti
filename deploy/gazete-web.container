@@ -1,0 +1,17 @@
+# Podman quadlet: ~/.config/containers/systemd/gazete-web.container
+[Unit]
+Description=Gazete Ozeti - statik site (nginx, yalniz ev agi)
+
+[Container]
+Image=docker.io/library/nginx:1.27-alpine
+ContainerName=gazete-web
+Volume=%h/gazete/data/web:/usr/share/nginx/html/web:ro,z
+Volume=%h/gazete/deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro,z
+PublishPort=8080:80
+AutoUpdate=registry
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

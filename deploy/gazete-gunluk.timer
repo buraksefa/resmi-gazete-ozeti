@@ -1,0 +1,12 @@
+[Unit]
+Description=Gazete Ozeti - 00:05 ve 30 dk arayla tekrar; gun icinde mukerrer kontrolu
+
+[Timer]
+OnCalendar=*-*-* 00:05,35:00
+OnCalendar=*-*-* 01,02:05,35:00
+OnCalendar=*-*-* 12,18:00:00
+OnCalendar=*-*-* 23:45:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

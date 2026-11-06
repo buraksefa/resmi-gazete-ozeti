@@ -1,0 +1,115 @@
+# Konu etiketleri — bu dosyayı serbestçe düzenleyebilirsin.
+#
+# Her etiket için:
+#   ad        : sitede görünecek ad
+#   aciklama  : modele verilen tek cümlelik tanım (model yalnız bu listeden seçer)
+#   kelimeler : başlıkta ya da kurum adında geçerse etiket model sormadan eklenir
+#               (büyük/küçük harf fark etmez; kelimenin başı eşleşir: "vergi" → "vergilendirme")
+#
+# Etiket eklemek/silmek için bölümü ekle/sil. Anahtar (köşeli parantez içi) adreslerde kullanılır;
+# sonradan değiştirirsen eski sayfaların etiket adresi değişir.
+# Değişiklikten sonra: python3.12 -m gazete.ozetle etiketle --hepsi
+
+[bankacilik-finans]
+ad = "Bankacılık ve finans"
+aciklama = "Bankalar, kredi, ödeme hizmetleri, elektronik para, sigorta, Merkez Bankası, kambiyo."
+kelimeler = ["banka", "bddk", "merkez bankası", "kredi", "ödeme hizmet", "elektronik para", "sigorta",
+             "kambiyo", "finansal kiralama", "faktoring", "katılım bank"]
+
+[sermaye-piyasasi]
+ad = "Sermaye piyasası"
+aciklama = "Borsa, menkul kıymetler, yatırım fonları, halka açık şirketler, SPK düzenlemeleri."
+kelimeler = ["sermaye piyasası", "spk", "borsa", "menkul kıymet", "yatırım fonu", "portföy", "kripto varlık"]
+
+[vergi]
+ad = "Vergi"
+aciklama = "Vergi, resim, harç, gümrük vergisi, KDV, ÖTV ve vergi usulü."
+kelimeler = ["vergi", "kdv", "katma değer", "özel tüketim", "harç", "resim ve harç", "gelir idaresi", "vuk"]
+
+[kvkk]
+ad = "Kişisel veriler (KVKK)"
+aciklama = "Kişisel verilerin korunması, veri sorumluları, veri güvenliği."
+kelimeler = ["kişisel veri", "kvkk"]
+
+[is-sgk]
+ad = "İş hukuku ve SGK"
+aciklama = "Çalışma hayatı, işçi-işveren, asgari ücret, sosyal güvenlik, emeklilik, iş sağlığı ve güvenliği."
+kelimeler = ["iş kanunu", "sosyal güvenlik", "sgk", "işçi", "işveren", "asgari ücret", "emekli",
+             "iş sağlığı", "işsizlik sigortası", "çalışma ve sosyal"]
+
+[kamu-personeli]
+ad = "Kamu personeli"
+aciklama = "Devlet memurları, görevde yükselme, unvan, kadro, atama esasları (kişi atamaları değil)."
+kelimeler = ["devlet memur", "görevde yükselme", "unvan değişikliği", "kadro", "personel"]
+
+[enerji]
+ad = "Enerji"
+aciklama = "Elektrik, doğal gaz, petrol, maden, yenilenebilir enerji, EPDK kararları."
+kelimeler = ["enerji", "epdk", "elektrik", "doğal gaz", "petrol", "maden", "yenilenebilir", "akaryakıt", "lpg"]
+
+[ulastirma]
+ad = "Ulaştırma"
+aciklama = "Karayolu, demiryolu, havacılık, denizcilik, trafik, haberleşme altyapısı."
+kelimeler = ["karayol", "demiryol", "havacılık", "havalimanı", "denizcilik", "liman", "trafik", "ulaştırma"]
+
+[iletisim-dijital]
+ad = "İletişim ve dijital"
+aciklama = "Elektronik haberleşme, internet, siber güvenlik, elektronik ticaret, dijital hizmetler."
+kelimeler = ["haberleşme", "btk", "siber", "elektronik ticaret", "dijital", "internet"]
+
+[egitim]
+ad = "Eğitim"
+aciklama = "Okullar, üniversiteler, yükseköğretim, sınavlar, öğrenciler, öğretim elemanları."
+kelimeler = ["üniversite", "eğitim-öğretim", "öğretim", "yükseköğretim", "fakülte", "enstitü", "okul",
+             "öğrenci", "milli eğitim", "uygulama ve araştırma merkezi"]
+
+[saglik]
+ad = "Sağlık"
+aciklama = "Sağlık hizmetleri, hastaneler, ilaç, tıbbi cihaz, sağlık meslekleri."
+kelimeler = ["sağlık", "hastane", "ilaç", "tıbbi", "tıp fakültesi", "diş hekim", "eczacı", "hemşire"]
+
+[imar-kamulastirma]
+ad = "İmar, yapı ve kamulaştırma"
+aciklama = "İmar planları, yapı denetimi, kentsel dönüşüm, kamulaştırma, tapu ve kadastro."
+kelimeler = ["imar", "yapı denetim", "kentsel dönüşüm", "kamulaştır", "tapu", "kadastro", "mimar"]
+
+[tarim-gida]
+ad = "Tarım ve gıda"
+aciklama = "Tarımsal destekler, hayvancılık, gıda güvenliği, orman, su ürünleri."
+kelimeler = ["tarım", "tarımsal", "bitkisel üretim", "hayvancılık", "gıda", "orman", "su ürünleri", "veteriner"]
+
+[cevre]
+ad = "Çevre ve iklim"
+aciklama = "Çevre koruma, atık, emisyon, iklim, korunan alanlar."
+kelimeler = ["çevre", "atık", "emisyon", "iklim", "sıfır atık"]
+
+[ticaret-sanayi]
+ad = "Ticaret, sanayi ve gümrük"
+aciklama = "Dış ticaret, ithalat-ihracat, gümrük, rekabet, tüketici, sanayi, patent ve marka."
+kelimeler = ["ticaret", "ithalat", "ihracat", "gümrük", "rekabet", "tüketici", "sanayi", "patent",
+             "marka", "menşe", "standart"]
+
+[adalet-yargi]
+ad = "Adalet ve yargı"
+aciklama = "Mahkeme kararları, Anayasa Mahkemesi, ceza ve infaz, avukatlık, bilirkişilik, noterlik."
+kelimeler = ["anayasa mahkemesi", "yargıtay", "danıştay", "mahkeme", "bilirkişi", "noter", "avukat", "infaz"]
+
+[dis-iliskiler]
+ad = "Dış ilişkiler ve andlaşmalar"
+aciklama = "Milletlerarası andlaşmalar, uluslararası kuruluşlar, BM kararları, yaptırımlar."
+kelimeler = ["andlaşma", "anlaşma", "birleşmiş milletler", "milletlerarası", "uluslararası"]
+
+[kamu-yonetimi]
+ad = "Kamu yönetimi ve teşkilat"
+aciklama = "Bakanlık ve kurumların teşkilatı, Cumhurbaşkanlığı kararnameleri, özelleştirme, kamu kurumları."
+kelimeler = ["teşkilat", "cumhurbaşkanlığı kararnamesi", "özelleştirme"]
+
+[spor-kultur]
+ad = "Spor ve kültür"
+aciklama = "Spor federasyonları, kültür, turizm, vakıflar, sanat."
+kelimeler = ["federasyon", "spor", "kültür", "turizm", "müze"]
+
+[aile-sosyal]
+ad = "Aile ve sosyal hizmetler"
+aciklama = "Aile, gençlik, çocuk, engelli, yaşlı, sosyal yardım."
+kelimeler = ["aile", "gençlik", "çocuk", "engelli", "sosyal yardım", "sosyal hizmet"]

@@ -1,0 +1,8 @@
+# gizli bilgiler ve veri asla depoya girmez
+.env
+data/
+docs/
+__pycache__/
+*.pyc
+deploy/worker/.wrangler/
+.DS_Store

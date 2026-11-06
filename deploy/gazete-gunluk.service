@@ -1,0 +1,15 @@
+[Unit]
+Description=Gazete Ozeti - gunluk Resmi Gazete toplayici
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/gazete
+ExecStart=/usr/bin/python3.12 -m gazete.collect gunluk
+# 75 = henuz yayimlanmadi / eksik; sonraki zamanlayici denemesi tekrar bakar
+SuccessExitStatus=75
+TimeoutStartSec=30min
+Nice=10
+# Isınmayı azaltmak için CPU sınırı
+CPUQuota=60%

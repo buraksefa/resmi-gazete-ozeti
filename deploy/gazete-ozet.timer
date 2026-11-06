@@ -1,0 +1,9 @@
+[Unit]
+Description=Gazete Ozeti - ozet kuyrugu (saatte bir)
+
+[Timer]
+OnCalendar=*-*-* *:20:00
+Persistent=false
+
+[Install]
+WantedBy=timers.target

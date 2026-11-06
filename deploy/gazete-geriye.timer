@@ -1,0 +1,11 @@
+[Unit]
+Description=Gazete Ozeti - gecmisi doldurma (gunde 2 calisma x 2 sayi)
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+OnCalendar=*-*-* 15:30:00
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

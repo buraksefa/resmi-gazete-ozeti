@@ -1,0 +1,9 @@
+[Unit]
+Description=Gazete Ozeti - OCR kuyrugu (saatte bir)
+
+[Timer]
+OnCalendar=*-*-* *:50:00
+Persistent=false
+
+[Install]
+WantedBy=timers.target

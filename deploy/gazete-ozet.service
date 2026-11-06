@@ -1,0 +1,15 @@
+[Unit]
+Description=Gazete Ozeti - ozet, etiket, once/sonra (yerel LLM: Ollama bsasrv)
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/gazete
+ExecStart=/usr/bin/python3.12 -m gazete.ozetle calistir
+# Siteyi ve dry-run taslakları yenile (yalnız onaylı özetler)
+ExecStartPost=/usr/bin/python3.12 -m gazete.site
+ExecStartPost=/usr/bin/python3.12 -m gazete.yayinla
+# Duzenleme arasinda 40 dk'da durur
+TimeoutStartSec=90min
+Nice=10
+# Isınmayı azaltmak için CPU sınırı
+CPUQuota=60%
