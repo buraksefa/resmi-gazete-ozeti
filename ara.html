@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="tr" data-kok="/resmi-gazete-ozeti"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ara — Gazete Özeti</title><meta name="description" content="Bu bir özettir, bağlayıcı olan Resmî Gazete&#x27;deki metindir.">
+<link rel="canonical" href="https://buraksefa.github.io/resmi-gazete-ozeti/ara"><meta property="og:url" content="https://buraksefa.github.io/resmi-gazete-ozeti/ara">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Gazete Özeti">
+<meta property="og:title" content="Ara"><meta property="og:description" content="Resmî Gazete&#x27;nin her sayısı sade Türkçe: kısa özetler, değişikliklerin önce/sonra hali, konu etiketleri ve RSS. Bu bir özettir, bağlayıcı olan Resmî Gazete&#x27;deki metindir.">
+<meta property="og:locale" content="tr_TR"><meta name="twitter:card" content="summary">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#2060df">
+<link rel="icon" href="/resmi-gazete-ozeti/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/resmi-gazete-ozeti/pico.min.css"><link rel="stylesheet" href="/resmi-gazete-ozeti/stil.css">
+<link rel="alternate" type="application/rss+xml" title="Gazete Özeti" href="/resmi-gazete-ozeti/rss.xml">
+</head><body>
+<header class="ust"><nav class="container">
+<ul><li><a class="marka" href="/resmi-gazete-ozeti/"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="5" y="3" width="22" height="26" rx="4" fill="#2060df"/><path d="M10 10h12M10 15h12M10 20h7" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg><span>Gazete Özeti</span></a></li></ul>
+<ul><li><a href="/resmi-gazete-ozeti/gun/">Günler</a></li><li><a href="/resmi-gazete-ozeti/etiket/">Konular</a></li><li><a href="/resmi-gazete-ozeti/ara">Ara</a></li>
+<li><a href="/resmi-gazete-ozeti/hakkinda">Hakkında</a></li></ul>
+</nav></header>
+<main class="container">
+<p class="not" role="note">Bu bir özettir, bağlayıcı olan Resmî Gazete&#x27;deki metindir.</p>
+<hgroup><h1>Ara</h1><p>Onaylı özetlerde başlık, kurum, özet ve konuya göre arar.</p></hgroup><form role="search" onsubmit="return false"><input id="q" type="search" placeholder="ör. doğal gaz, vergi, yönetmelik" aria-label="Ara" autofocus></form><div id="sonuc"></div><script>
+const q=document.getElementById('q'),out=document.getElementById('sonuc');let veri=[];
+const k=s=>s.replace(/I/g,'ı').replace(/İ/g,'i').toLocaleLowerCase('tr');
+const ilk=new URLSearchParams(location.search).get('q');if(ilk)q.value=ilk;
+const KOK=document.documentElement.dataset.kok||'';
+fetch(KOK+'/ara.json').then(r=>r.json()).then(j=>{veri=j;ara()});
+function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+function ara(){const t=k(q.value.trim()).split(/\s+/).filter(Boolean);out.textContent='';
+ history.replaceState(null,'',q.value.trim()?'?q='+encodeURIComponent(q.value.trim()):location.pathname);
+ if(!t.length)return;const bul=veri.filter(d=>t.every(w=>d.k.includes(w))).slice(0,100);
+ out.append(el('p','meta',bul.length?bul.length+' sonuç':'Sonuç yok. Daha kısa ya da farklı bir sözcük deneyin.'));
+ for(const d of bul){const a=el('article','kalem'),u=el('div','ust-bilgi'),h=el('h3'),l=el('a',null,d.b);
+  u.append(el('span','rozet r-'+d.c,d.y),el('span',null,d.g+(d.r?' · '+d.r:'')));
+  l.href=KOK+d.u;h.append(l);a.append(u,h,el('p','ozet',d.o));out.append(a)}}
+q.addEventListener('input',ara);
+</script>
+</main>
+<footer class="container alt"><p><strong>Bu bir özettir, bağlayıcı olan Resmî Gazete&#x27;deki metindir.</strong></p>
+<p>Özetler yerelde çalışan bir dil modeliyle üretilir ve yayımdan önce bir kişi tarafından okunup onaylanır.
+Atamalar yalnız olgu olarak (ad, kurum, görev) verilir. Bağımsız bir projedir; Resmî Gazete ile resmî bir bağı yoktur.</p>
+<p>Kaynak: <a href="https://www.resmigazete.gov.tr">resmigazete.gov.tr</a> · <a href="/resmi-gazete-ozeti/rss.xml">RSS</a> ·
+<a href="/resmi-gazete-ozeti/hakkinda">Yöntem</a></p></footer></body></html>
