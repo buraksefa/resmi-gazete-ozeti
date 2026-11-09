@@ -86,8 +86,8 @@ Yayın kuralı (9 Kasım 2026'dan beri, `GAZETE_OTOMATIK_YAYIN=1`):
 
 - Otomatik denetimden uyarısız geçen ("hazır") özet onay beklemeden sitede ve RSS'te yayımlanır,
   **"otomatik özet · henüz incelenmedi"** etiketiyle. Onaylayınca etiket kalkar; reddedince siteden iner.
-- Uyarılı ("kontrol") özetler, OCR metnine dayananlar ve kaynağı OCR kontrolü bekleyenler yalnız elle
-  onaydan sonra yayımlanır.
+- OCR metnine dayanan uyarısız özetler de yayımlanır; etiketlerinde OCR okuma hatası uyarısı vardır.
+- Uyarılı ("kontrol") özetler ve kaynağı OCR kontrolü bekleyenler yalnız elle onaydan sonra yayımlanır.
 - X/e-posta taslaklarına yalnız elle onaylanmış özetler girer.
 - `GAZETE_OTOMATIK_YAYIN=0` ile eski kurala (yalnız onaylılar) dönülür.
 

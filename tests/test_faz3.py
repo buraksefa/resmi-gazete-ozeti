@@ -160,14 +160,21 @@ class SiteTest(Ortam):
         self.assertNotIn("henüz bir kişi tarafından incelenmedi", d)
         self.assertTrue((config.TASLAK_DIR / "2026-10-31" / "x.txt").exists())
 
-    def test_reddedilen_ocr_ve_kapali_ayar_yayimlanmaz(self):
+    def test_reddedilen_ocr_kontrolu_ve_kapali_ayar(self):
         self.komut("reddet", "20261031-2", "yanlış")
         self.assertNotIn("Doğal gaz piyasasında", (site.uret(self.con) / "d/20261031-2.html").read_text(encoding="utf-8"))
         self.komut("geri", "20261031-2")
+        # OCR metnine dayanan uyarısız özet yayımlanır, okuma hatası uyarısıyla
         self.con.execute("UPDATE duzenlemeler SET metin_kaynagi='pdf+ocr' WHERE id='eskiler/20261031-2'")
         self.con.commit()
+        d = (site.uret(self.con) / "d/20261031-2.html").read_text(encoding="utf-8")
+        self.assertIn("Doğal gaz piyasasında", d)
+        self.assertIn("okuma hatası olabilir · henüz bir kişi", d)
+        # kaynağı OCR kontrolü bekliyorsa yayımlanmaz
+        self.con.execute("UPDATE duzenlemeler SET kontrol_gerekli=1 WHERE id='eskiler/20261031-2'")
+        self.con.commit()
         self.assertNotIn("Doğal gaz piyasasında", (site.uret(self.con) / "d/20261031-2.html").read_text(encoding="utf-8"))
-        self.con.execute("UPDATE duzenlemeler SET metin_kaynagi=NULL WHERE id='eskiler/20261031-2'")
+        self.con.execute("UPDATE duzenlemeler SET metin_kaynagi=NULL, kontrol_gerekli=0 WHERE id='eskiler/20261031-2'")
         self.con.commit()
         with mock.patch.object(config, "OTOMATIK_YAYIN", False):
             self.assertNotIn("Doğal gaz piyasasında",

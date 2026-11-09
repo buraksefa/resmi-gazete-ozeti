@@ -1,6 +1,7 @@
 """Statik site + RSS (Faz 3). Yayımlanan özetler: elle onaylananlar ve (OTOMATIK_YAYIN açıkken) otomatik
 denetimden uyarısız geçenler ("hazir"). İkinciler "henüz incelenmedi" etiketiyle görünür; uyarılı ("kontrol"),
-reddedilmiş, OCR kaynaklı ya da kaynağı OCR kontrolü bekleyen özetler yalnız elle onayla yayımlanır.
+reddedilmiş ya da kaynağı OCR kontrolü bekleyen özetler yalnız elle onayla yayımlanır. OCR metnine dayanan
+otomatik özet ayrıca okuma hatası uyarısı taşır.
 
   python3.12 -m gazete.site          # data/web/site-<zaman> üretir, data/web/current'ı ona çevirir
 
@@ -215,11 +216,12 @@ class Veri:
         self.duz = {r["id"]: r for r in con.execute("SELECT * FROM duzenlemeler ORDER BY tarih, mukerrer, sira")}
         kosul = "o.onay = 'onaylandi'"
         if config.OTOMATIK_YAYIN:
-            # uyarısız özet onay beklemeden yayımlanır; OCR metnine dayananlar hariç (rakam okuma hatası riski)
-            kosul += (" OR (o.onay IS NULL AND o.durum = 'hazir' AND COALESCE(d.kontrol_gerekli, 0) = 0"
-                      " AND COALESCE(d.metin_kaynagi, '') NOT LIKE '%ocr')")
+            # uyarısız özet onay beklemeden yayımlanır; kaynak metni OCR kontrolü bekleyenler hariç.
+            # OCR metnine dayanan özet ayrıca "taranmış metinden" uyarısı taşır (rakam okuma hatası riski).
+            kosul += " OR (o.onay IS NULL AND o.durum = 'hazir' AND COALESCE(d.kontrol_gerekli, 0) = 0)"
         self.ozet = {r["duzenleme_id"]: r for r in con.execute(
-            f"SELECT o.* FROM ozetler o JOIN duzenlemeler d ON d.id = o.duzenleme_id WHERE {kosul}")}
+            f"SELECT o.*, d.metin_kaynagi AS kaynak_turu FROM ozetler o JOIN duzenlemeler d ON d.id = o.duzenleme_id "
+            f"WHERE {kosul}")}
         self.etk = {}
         for r in con.execute("SELECT * FROM etiketler"):
             if r["etiket"] in etiketler:
@@ -258,6 +260,14 @@ def incelendi(o):
 
 
 OTO_ETIKET = '<p class="oto"><small>Otomatik özet · henüz bir kişi tarafından incelenmedi</small></p>'
+OTO_OCR_ETIKET = ('<p class="oto"><small>Otomatik özet · taranmış görüntüden okunan (OCR) metne dayanır; rakam ve '
+                  'adlarda okuma hatası olabilir · henüz bir kişi tarafından incelenmedi</small></p>')
+
+
+def oto_etiket(o):
+    if incelendi(o):
+        return ""
+    return OTO_OCR_ETIKET if (o["kaynak_turu"] or "").endswith("ocr") else OTO_ETIKET
 
 
 def ozet_html(v, d, tam=False):
@@ -273,8 +283,8 @@ def ozet_html(v, d, tam=False):
         devam = "" if tam or len(olg) <= 5 else f'<p class="meta">… ve {len(olg) - 5} kişi daha.</p>'
         return (f'<p class="ozet">{e(o["ozet"])}</p><div class="overflow-auto"><table class="striped"><thead><tr>'
                 f'<th>Ad</th><th>Kurum ve görev</th><th>İşlem</th></tr></thead><tbody>{satirlar}</tbody></table></div>'
-                f'{devam}{"" if incelendi(o) else OTO_ETIKET}')
-    return f'<p class="ozet">{e(o["ozet"])}</p>{"" if incelendi(o) else OTO_ETIKET}'
+                f'{devam}{oto_etiket(o)}')
+    return f'<p class="ozet">{e(o["ozet"])}</p>{oto_etiket(o)}'
 
 
 def kalem_html(v, d, tarih=False):
@@ -470,8 +480,9 @@ Yürürlük tarihi modelden değil, metindeki yürürlük maddesinden alınır.<
 <li>Otomatik denetimler özetteki her tarih, sayı ve özel adın kaynakta geçip geçmediğine, yorum ya da
 değerlendirme ifadesi bulunup bulunmadığına bakar.</li>
 <li>Denetimlerden uyarısız geçen özet yayımlanır ve bir kişi okuyup onaylayana kadar
-<strong>“otomatik özet · henüz incelenmedi”</strong> etiketini taşır. Denetimde uyarı veren, taranmış görüntüden
-okunan ya da reddedilen özet, bir kişi inceleyip onaylamadan yayımlanmaz.</li></ol>
+<strong>“otomatik özet · henüz incelenmedi”</strong> etiketini taşır; taranmış görüntüden okunan metne dayanıyorsa
+bu da belirtilir. Denetimde uyarı veren, okumasında şüpheli yer bulunan ya da reddedilen özet, bir kişi inceleyip
+onaylamadan yayımlanmaz.</li></ol>
 <h2>Atamalar</h2>
 <p>Atama ve görevden alma kararları yalnız olgu olarak listelenir: ad, kurum ve görev. Yorum yapılmaz.</p>
 <h2>Önce / sonra</h2>
@@ -509,7 +520,8 @@ def rss(v, baslik, kalemler):
         o = v.ozet[d["id"]]
         z = o["onay_zamani"] or o["olusturma"]
         zaman = datetime.fromisoformat(z) if z else datetime.now(config.TZ)
-        oto = "" if incelendi(o) else "[Otomatik özet, henüz incelenmedi] "
+        oto = "" if incelendi(o) else ("[Otomatik özet, OCR metninden, henüz incelenmedi] "
+                                         if (o["kaynak_turu"] or "").endswith("ocr") else "[Otomatik özet, henüz incelenmedi] ")
         ogeler.append(
             f"<item><title>{e(d['baslik'])}</title><link>{e(config.SITE_URL + sayfa_yolu(d['id']))}</link>"
             f"<guid isPermaLink=\"false\">{e(d['id'])}</guid><pubDate>{format_datetime(zaman)}</pubDate>"
