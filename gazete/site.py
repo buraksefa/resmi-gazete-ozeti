@@ -405,15 +405,18 @@ def ana_sayfa(v):
              f'<div class="sayilar"><div><strong>{len(onayli)}</strong><span>onaylı özet</span></div>'
              f'<div><strong>{len(v.gunler)}</strong><span>gün arşivde</span></div>'
              f'<div><strong>{len(v.etiketler)}</strong><span>konu</span></div></div></section>']
-    if not son:
-        parca.append('<p class="bekliyor">Henüz onaylanmış özet yok.</p>')
-    gun = None
-    for d in son:
-        if d["tarih"] != gun:
-            gun = d["tarih"]
-            parca.append(f'<div class="bolum-baslik"><h2>{e(tarih_tr(gun))}</h2>'
-                         f'<a href="/gun/{gun}">Günün tüm listesi →</a></div>')
-        parca.append(kalem_html(v, d))
+    # Son iki sayı tam liste: onaylanmamış kalemde yalnız başlık görünür, özet onaydan sonra gelir.
+    # Böylece ana sayfa onay beklerken de güncel kalır.
+    for gun in v.gunler[:2]:
+        kalemler = [d for d in v.duz.values() if d["tarih"] == gun and d["tur"] != "ilan"]
+        parca.append(f'<div class="bolum-baslik"><h2>{e(tarih_tr(gun))}</h2>'
+                     f'<a href="/gun/{gun}">Günün listesi →</a></div>'
+                     f'<p class="meta">{e(gun_alt_baslik(v, gun))}</p>')
+        parca += [kalem_html(v, d) for d in kalemler]
+    eski = [d for d in son if d["tarih"] not in v.gunler[:2]][:10]
+    if eski:
+        parca.append('<h2>Son onaylı özetler</h2>')
+        parca += [kalem_html(v, d, tarih=True) for d in eski]
     sayac = {t: sum(1 for d in onayli if t in v.etk.get(d["id"], [])) for t in v.etiketler}
     konular = "".join(f'<a class="etiket" href="/etiket/{e(t)}">{e(x["ad"])} · {sayac[t]}</a>'
                       for t, x in sorted(v.etiketler.items(), key=lambda kv: -sayac[kv[0]]) if sayac[t])
