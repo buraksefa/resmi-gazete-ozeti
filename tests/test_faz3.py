@@ -13,9 +13,10 @@ from unittest import mock
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
+os.environ["GAZETE_YAYIN"] = ""   # testler hiçbir zaman gerçek siteye yükleme yapmasın
 os.environ.setdefault("GAZETE_CONTACT", "test@example.invalid")
 
-from gazete import config, db, onay, ozet, site, taslak  # noqa: E402
+from gazete import config, db, onay, ozet, site, taslak, yayinla  # noqa: E402
 
 ETIKET = {"enerji": {"ad": "Enerji", "aciklama": "Elektrik, doğal gaz", "kelimeler": ["doğal gaz"]}}
 GIZLI = "BU-ÖZET-ONAYSIZ"
@@ -140,6 +141,10 @@ class SiteTest(Ortam):
                 self.assertTrue({h, h + ".html", h + "index.html"} & var, f"{p.relative_to(yeni)}: {h}")
         self.assertIn("/pico.min.css", var)
         self.assertIn("/favicon.svg", var)
+
+    def test_testte_yayin_kapali(self):
+        self.assertEqual(config.YAYIN_HEDEF, "")
+        self.assertFalse(yayinla.yayinla(zorla=True))
 
     def test_alt_klasor_koku(self):
         with mock.patch.object(config, "SITE_KOK", "/resmi-gazete-ozeti"):

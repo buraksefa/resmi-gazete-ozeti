@@ -10,6 +10,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 FX = HERE / "fixtures"
 sys.path.insert(0, str(HERE.parent))
+os.environ["GAZETE_YAYIN"] = ""   # testler hiçbir zaman gerçek siteye yükleme yapmasın
 os.environ.setdefault("GAZETE_CONTACT", "test@example.invalid")
 
 from gazete import amend, db, parse  # noqa: E402

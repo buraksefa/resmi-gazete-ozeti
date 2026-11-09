@@ -9,6 +9,7 @@ from unittest import mock
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
+os.environ["GAZETE_YAYIN"] = ""   # testler hiçbir zaman gerçek siteye yükleme yapmasın
 os.environ.setdefault("GAZETE_CONTACT", "test@example.invalid")
 
 from gazete import db, fark, ozet  # noqa: E402
