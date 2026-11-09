@@ -1,4 +1,6 @@
-"""Özet yayın onayı. Onaylanmamış özet sitede, RSS'te ve taslaklarda görünmez.
+"""Özet inceleme ve onayı. Uyarısız ("hazir") özetler onay beklemeden "otomatik özet · henüz incelenmedi"
+etiketiyle sitede ve RSS'te yayımlanır (config.OTOMATIK_YAYIN); onaylayınca etiket kalkar, reddedince siteden
+iner. Uyarılı ("kontrol") özetler ve X/e-posta taslakları yalnız onaydan sonra yayımlanır.
 
   python3.12 -m gazete.onay liste [YYYY-MM-DD]      # onay bekleyenler (uyarılarıyla)
   python3.12 -m gazete.onay goster 20261031-2       # özet + kaynak metnin başı

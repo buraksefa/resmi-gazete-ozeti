@@ -3,7 +3,7 @@
 data/taslak/<tarih>/x.txt        X için başlık (≤280) + dizi; her gönderi ≤280 karakter (bağlantı 23 sayılır)
 data/taslak/<tarih>/eposta.html  e-posta bülteni (HTML) ve eposta.txt (düz metin)
 
-Yalnız onaylanmış özetler girer. Atamalarda kişi adı ve yorum yok: yalnız kurum/görev sayısı ve kaynak.
+Yalnız elle onaylanmış özetler girer (otomatik yayımlanan, incelenmemiş özetler girmez). Atamalarda kişi adı ve yorum yok: yalnız kurum/görev sayısı ve kaynak.
 Bu modülde X API'si ya da SMTP kodu bulunmaz; paylaşım ayrı ve senin onayınla eklenecek bir adımdır.
 """
 import html
@@ -85,7 +85,8 @@ def _sayfa(did):
 def uret(v, gun_sayisi=7):
     """site.Veri ile son günlerin taslaklarını yazar (onaylı kalemi olan günler)."""
     for tarih in v.gunler[:gun_sayisi]:
-        kalemler = [(d, v.ozet[d["id"]]) for d in v.duz.values() if d["tarih"] == tarih and d["id"] in v.ozet]
+        kalemler = [(d, v.ozet[d["id"]]) for d in v.duz.values()
+                    if d["tarih"] == tarih and d["id"] in v.ozet and v.ozet[d["id"]]["onay"] == "onaylandi"]
         kalemler.sort(key=lambda x: (x[0]["mukerrer"], x[0]["sira"]))
         klasor = config.TASLAK_DIR / tarih
         if not kalemler:

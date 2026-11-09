@@ -1,4 +1,6 @@
-"""Statik site + RSS (Faz 3). Yalnız onaylanmış özetler yayımlanır.
+"""Statik site + RSS (Faz 3). Yayımlanan özetler: elle onaylananlar ve (OTOMATIK_YAYIN açıkken) otomatik
+denetimden uyarısız geçenler ("hazir"). İkinciler "henüz incelenmedi" etiketiyle görünür; uyarılı ("kontrol"),
+reddedilmiş, OCR kaynaklı ya da kaynağı OCR kontrolü bekleyen özetler yalnız elle onayla yayımlanır.
 
   python3.12 -m gazete.site          # data/web/site-<zaman> üretir, data/web/current'ı ona çevirir
 
@@ -69,6 +71,9 @@ article.soluk{background:transparent;box-shadow:none;border:1px dashed var(--pic
 .r-atama,.r-vekalet{--r:#b45309}.r-yargi-karari{--r:#be123c}.r-andlasma{--r:#0369a1}
 @media (prefers-color-scheme:dark){.rozet{color:color-mix(in srgb,var(--r,#64748b) 50%,#fff)}}
 .ozet{margin-bottom:.6rem}
+.oto{margin:-.2rem 0 .5rem;color:var(--pico-muted-color)}
+.oto small::before{content:"";display:inline-block;width:.5rem;height:.5rem;border-radius:50%;background:#f59e0b;
+ margin-right:.4rem;vertical-align:.05rem}
 .etiketler{display:flex;flex-wrap:wrap;gap:.35rem;margin:.3rem 0 0}
 a.etiket{font-size:.78rem;padding:.12rem .6rem;border-radius:99px;border:1px solid var(--pico-muted-border-color);
  color:var(--pico-muted-color);text-decoration:none}
@@ -182,7 +187,8 @@ def sablon(baslik, govde, aciklama=""):
 {govde}
 </main>
 <footer class="container alt"><p><strong>{e(NOT)}</strong></p>
-<p>Özetler yerelde çalışan bir dil modeliyle üretilir ve yayımdan önce bir kişi tarafından okunup onaylanır.
+<p>Özetler yerelde çalışan bir dil modeliyle üretilir ve otomatik denetimden geçer. Bir kişi tarafından henüz
+incelenmemiş özetler “otomatik özet” etiketiyle belirtilir; denetimde uyarı verenler incelenene kadar yayımlanmaz.
 Atamalar yalnız olgu olarak (ad, kurum, görev) verilir. Bağımsız bir projedir; Resmî Gazete ile resmî bir bağı yoktur.</p>
 <p>Kaynak: <a href="https://www.resmigazete.gov.tr">resmigazete.gov.tr</a> · <a href="/rss.xml">RSS</a> ·
 <a href="/hakkinda">Yöntem</a></p></footer></body></html>
@@ -207,7 +213,13 @@ class Veri:
         self.con = con
         self.etiketler = etiketler
         self.duz = {r["id"]: r for r in con.execute("SELECT * FROM duzenlemeler ORDER BY tarih, mukerrer, sira")}
-        self.ozet = {r["duzenleme_id"]: r for r in con.execute("SELECT * FROM ozetler WHERE onay='onaylandi'")}
+        kosul = "o.onay = 'onaylandi'"
+        if config.OTOMATIK_YAYIN:
+            # uyarısız özet onay beklemeden yayımlanır; OCR metnine dayananlar hariç (rakam okuma hatası riski)
+            kosul += (" OR (o.onay IS NULL AND o.durum = 'hazir' AND COALESCE(d.kontrol_gerekli, 0) = 0"
+                      " AND COALESCE(d.metin_kaynagi, '') NOT LIKE '%ocr')")
+        self.ozet = {r["duzenleme_id"]: r for r in con.execute(
+            f"SELECT o.* FROM ozetler o JOIN duzenlemeler d ON d.id = o.duzenleme_id WHERE {kosul}")}
         self.etk = {}
         for r in con.execute("SELECT * FROM etiketler"):
             if r["etiket"] in etiketler:
@@ -218,7 +230,7 @@ class Veri:
         self.gunler = sorted({d["tarih"] for d in self.duz.values()}, reverse=True)
 
     def onayli(self):
-        """Yayımlanan kalemler: onaylı özeti olanlar, yeniden eskiye."""
+        """Yayımlanan kalemler (onaylı ya da otomatik yayımlanan özeti olanlar), yeniden eskiye."""
         return sorted((self.duz[i] for i in self.ozet if i in self.duz),
                       key=lambda d: (d["tarih"], -d["mukerrer"], -d["sira"]), reverse=True)
 
@@ -234,11 +246,18 @@ def rozet(tur):
 
 
 def etiket_html(v, did):
-    if did not in v.ozet:   # etiketler de (kısmen model önerisi) onaydan sonra görünür
+    if did not in v.ozet:   # etiketler de (kısmen model önerisi) özet yayımlanınca görünür
         return ""
     etk = "".join(f'<a class="etiket" href="/etiket/{e(t)}">{e(v.etiketler[t]["ad"])}</a>'
                   for t in v.etk.get(did, []))
     return f'<p class="etiketler">{etk}</p>' if etk else ""
+
+
+def incelendi(o):
+    return o["onay"] == "onaylandi"
+
+
+OTO_ETIKET = '<p class="oto"><small>Otomatik özet · henüz bir kişi tarafından incelenmedi</small></p>'
 
 
 def ozet_html(v, d, tam=False):
@@ -253,8 +272,9 @@ def ozet_html(v, d, tam=False):
                            for x in (olg if tam else olg[:5]))
         devam = "" if tam or len(olg) <= 5 else f'<p class="meta">… ve {len(olg) - 5} kişi daha.</p>'
         return (f'<p class="ozet">{e(o["ozet"])}</p><div class="overflow-auto"><table class="striped"><thead><tr>'
-                f'<th>Ad</th><th>Kurum ve görev</th><th>İşlem</th></tr></thead><tbody>{satirlar}</tbody></table></div>{devam}')
-    return f'<p class="ozet">{e(o["ozet"])}</p>'
+                f'<th>Ad</th><th>Kurum ve görev</th><th>İşlem</th></tr></thead><tbody>{satirlar}</tbody></table></div>'
+                f'{devam}{"" if incelendi(o) else OTO_ETIKET}')
+    return f'<p class="ozet">{e(o["ozet"])}</p>{"" if incelendi(o) else OTO_ETIKET}'
 
 
 def kalem_html(v, d, tarih=False):
@@ -285,7 +305,7 @@ def gun_alt_baslik(v, t):
     parca = [f"Resmî Gazete sayı {asil}" if asil else "Resmî Gazete"]
     if muk:
         parca.append(", ".join(f"{m}. mükerrer" for m in muk))
-    parca.append(f"{kalem} düzenleme, {v.gun_ozet_sayisi(t)} onaylı özet")
+    parca.append(f"{kalem} düzenleme, {v.gun_ozet_sayisi(t)} özet")
     return " · ".join(parca)
 
 
@@ -361,9 +381,13 @@ def duzenleme_sayfasi(v, d):
             d["kurum"] or ""]
     o = v.ozet.get(d["id"])
     onay = ""
-    if o:
+    if o and incelendi(o):
         onay = (f'<footer>Özet {"elle düzeltildi ve " if o["elle_duzeltildi"] else ""}'
-                f'{tarih_tr(o["onay_zamani"][:10])} tarihinde onaylandı.</footer>')
+                f'{tarih_tr(o["onay_zamani"][:10])} tarihinde bir kişi tarafından incelenip onaylandı.</footer>')
+    elif o:
+        ne_zaman = f'{tarih_tr(o["olusturma"][:10])} tarihinde ' if o["olusturma"] else ""
+        onay = (f'<footer>Özet {ne_zaman}otomatik üretildi ve otomatik denetimlerden uyarısız geçti; '
+                'henüz bir kişi tarafından incelenmedi.</footer>')
     parca = [f'<nav aria-label="breadcrumb"><ul><li><a href="/">Ana sayfa</a></li>'
              f'<li><a href="/gun/{d["tarih"]}">{e(tarih_tr(d["tarih"]))}</a></li><li>{e(d["tur"])}</li></ul></nav>',
              f'<hgroup><h1>{e(d["baslik"])}</h1><p>{e(" · ".join(x for x in meta if x))}</p></hgroup>',
@@ -398,15 +422,14 @@ def ana_sayfa(v):
     son = onayli[:20]
     parca = ['<section class="giris"><h1>Resmî Gazete, sade Türkçe</h1>'
              '<p class="lead">Her sayıdaki düzenlemelerin kısa ve tarafsız özeti, değişikliklerin önce/sonra hali, '
-             'konu etiketleri ve RSS. Her özet yayımdan önce elle onaylanır.</p>'
+             'konu etiketleri ve RSS. İncelenmemiş özetler açıkça belirtilir.</p>'
              '<form role="search" action="/ara"><input type="search" name="q" '
              'placeholder="Başlık, kurum ya da konu ara" aria-label="Özetlerde ara"><input type="submit" value="Ara">'
              '</form>'
-             f'<div class="sayilar"><div><strong>{len(onayli)}</strong><span>onaylı özet</span></div>'
+             f'<div class="sayilar"><div><strong>{len(onayli)}</strong><span>özet</span></div>'
              f'<div><strong>{len(v.gunler)}</strong><span>gün arşivde</span></div>'
              f'<div><strong>{len(v.etiketler)}</strong><span>konu</span></div></div></section>']
-    # Son iki sayı tam liste: onaylanmamış kalemde yalnız başlık görünür, özet onaydan sonra gelir.
-    # Böylece ana sayfa onay beklerken de güncel kalır.
+    # Son iki sayı tam liste: özeti yayımlanmamış kalemde yalnız başlık görünür.
     for gun in v.gunler[:2]:
         kalemler = [d for d in v.duz.values() if d["tarih"] == gun and d["tur"] != "ilan"]
         parca.append(f'<div class="bolum-baslik"><h2>{e(tarih_tr(gun))}</h2>'
@@ -415,7 +438,7 @@ def ana_sayfa(v):
         parca += [kalem_html(v, d) for d in kalemler]
     eski = [d for d in son if d["tarih"] not in v.gunler[:2]][:10]
     if eski:
-        parca.append('<h2>Son onaylı özetler</h2>')
+        parca.append('<h2>Önceki günlerden özetler</h2>')
         parca += [kalem_html(v, d, tarih=True) for d in eski]
     sayac = {t: sum(1 for d in onayli if t in v.etk.get(d["id"], [])) for t in v.etiketler}
     konular = "".join(f'<a class="etiket" href="/etiket/{e(t)}">{e(x["ad"])} · {sayac[t]}</a>'
@@ -446,8 +469,9 @@ bu durum belirtilir; okumada şüpheli yer varsa metin kontrol edilene kadar gö
 Yürürlük tarihi modelden değil, metindeki yürürlük maddesinden alınır.</li>
 <li>Otomatik denetimler özetteki her tarih, sayı ve özel adın kaynakta geçip geçmediğine, yorum ya da
 değerlendirme ifadesi bulunup bulunmadığına bakar.</li>
-<li><strong>Her özet yayımdan önce bir kişi tarafından okunur ve onaylanır.</strong> Onaylanmayan özet sitede,
-RSS'te ve paylaşımlarda yer almaz.</li></ol>
+<li>Denetimlerden uyarısız geçen özet yayımlanır ve bir kişi okuyup onaylayana kadar
+<strong>“otomatik özet · henüz incelenmedi”</strong> etiketini taşır. Denetimde uyarı veren, taranmış görüntüden
+okunan ya da reddedilen özet, bir kişi inceleyip onaylamadan yayımlanmaz.</li></ol>
 <h2>Atamalar</h2>
 <p>Atama ve görevden alma kararları yalnız olgu olarak listelenir: ad, kurum ve görev. Yorum yapılmaz.</p>
 <h2>Önce / sonra</h2>
@@ -474,7 +498,7 @@ def etiket_sayfalari(v):
                  f'<div class="dugmeler"><a role="button" class="outline secondary" href="/rss/{e(t)}.xml">'
                  f'Bu konunun RSS beslemesi</a></div>'
                  + ("".join(kalem_html(v, d, tarih=True) for d in sayac[t])
-                    or '<p class="bekliyor">Bu konuda onaylı özet yok.</p>'))
+                    or '<p class="bekliyor">Bu konuda yayımlanmış özet yok.</p>'))
         out[f"etiket/{t}.html"] = sablon(x["ad"], govde, f"{x['ad']} konusundaki Resmî Gazete düzenlemelerinin özetleri.")
     return out
 
@@ -483,11 +507,13 @@ def rss(v, baslik, kalemler):
     ogeler = []
     for d in kalemler[:50]:
         o = v.ozet[d["id"]]
-        zaman = datetime.fromisoformat(o["onay_zamani"])
+        z = o["onay_zamani"] or o["olusturma"]
+        zaman = datetime.fromisoformat(z) if z else datetime.now(config.TZ)
+        oto = "" if incelendi(o) else "[Otomatik özet, henüz incelenmedi] "
         ogeler.append(
             f"<item><title>{e(d['baslik'])}</title><link>{e(config.SITE_URL + sayfa_yolu(d['id']))}</link>"
             f"<guid isPermaLink=\"false\">{e(d['id'])}</guid><pubDate>{format_datetime(zaman)}</pubDate>"
-            f"<description>{e(o['ozet'] + ' — ' + NOT + ' Kaynak: ' + d['kaynak_url'])}</description></item>")
+            f"<description>{e(oto + o['ozet'] + ' — ' + NOT + ' Kaynak: ' + d['kaynak_url'])}</description></item>")
     return (f'<?xml version="1.0" encoding="utf-8"?>\n<rss version="2.0"><channel><title>{e(baslik)}</title>'
             f"<link>{e(config.SITE_URL)}/</link><description>{e(NOT)}</description><language>tr</language>"
             + "".join(ogeler) + "</channel></rss>\n")
@@ -558,7 +584,8 @@ def uret(con=None):
     for eski in sorted(web.glob("site-*"))[:-2]:
         shutil.rmtree(eski)
     taslak.uret(v)
-    print(f"site: {yeni} ({len(v.ozet)} onaylı özet, {len(v.gunler)} gün)")
+    n_onay = sum(incelendi(o) for o in v.ozet.values())
+    print(f"site: {yeni} ({len(v.ozet)} özet, {n_onay} incelenmiş, {len(v.gunler)} gün)")
     return yeni
 
 

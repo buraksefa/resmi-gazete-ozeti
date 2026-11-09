@@ -72,6 +72,10 @@ SITE_KOK = urlsplit(SITE_URL).path.rstrip("/")
 # Cloudflare Workers statik varlıkları (herkese açık kopya, *.workers.dev). *.pages.dev Türkiye'den
 # erişilemediği için (TLS el sıkışması kesiliyor, 2 Kasım 2026) Pages yerine Workers kullanılır.
 # Anahtar .env'de; yoksa yükleme atlanır. Worker adı ve ayarları: deploy/worker/wrangler.jsonc
+# Uyarısız ("hazir") özetler onay beklemeden "henüz incelenmedi" etiketiyle yayımlanır (9 Kasım 2026 kararı).
+# 0 yapılırsa yalnız elle onaylananlar yayımlanır. Taslaklara (X/e-posta) her durumda yalnız onaylılar girer.
+OTOMATIK_YAYIN = os.environ.get("GAZETE_OTOMATIK_YAYIN", "1").strip() not in ("0", "", "false", "hayir")
+
 # Yayın hedefi: "github" (GitHub Pages, gh-pages dalı), "cloudflare" (Workers) ya da boş (yalnız LAN)
 YAYIN_HEDEF = os.environ.get("GAZETE_YAYIN", "").strip().lower()
 GITHUB_DEPO = os.environ.get("GAZETE_GITHUB_DEPO", "github-gazete:buraksefa/resmi-gazete-ozeti.git")

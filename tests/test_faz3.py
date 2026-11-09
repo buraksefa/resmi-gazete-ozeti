@@ -142,6 +142,37 @@ class SiteTest(Ortam):
         self.assertIn("/pico.min.css", var)
         self.assertIn("/favicon.svg", var)
 
+    def test_uyarisiz_ozet_etiketle_yayimlanir(self):
+        # onay yok: "hazir" özet sitede ve RSS'te, "incelenmedi" etiketiyle; taslaklarda yok
+        yeni = site.uret(self.con)
+        d = (yeni / "d/20261031-2.html").read_text(encoding="utf-8")
+        self.assertIn("Doğal gaz piyasasında", d)
+        self.assertIn("henüz bir kişi tarafından incelenmedi", d)
+        self.assertIn("[Otomatik özet, henüz incelenmedi]", (yeni / "rss.xml").read_text(encoding="utf-8"))
+        self.assertFalse((config.TASLAK_DIR / "2026-10-31").exists())
+        for p in yeni.rglob("*"):
+            if p.is_file():
+                self.assertNotIn(GIZLI, p.read_text(encoding="utf-8"), p.name)   # "kontrol" hâlâ gizli
+        # onaylayınca etiket kalkar ve taslağa girer
+        self.komut("onayla", "20261031-2")
+        yeni = site.uret(self.con)
+        d = (yeni / "d/20261031-2.html").read_text(encoding="utf-8")
+        self.assertNotIn("henüz bir kişi tarafından incelenmedi", d)
+        self.assertTrue((config.TASLAK_DIR / "2026-10-31" / "x.txt").exists())
+
+    def test_reddedilen_ocr_ve_kapali_ayar_yayimlanmaz(self):
+        self.komut("reddet", "20261031-2", "yanlış")
+        self.assertNotIn("Doğal gaz piyasasında", (site.uret(self.con) / "d/20261031-2.html").read_text(encoding="utf-8"))
+        self.komut("geri", "20261031-2")
+        self.con.execute("UPDATE duzenlemeler SET metin_kaynagi='pdf+ocr' WHERE id='eskiler/20261031-2'")
+        self.con.commit()
+        self.assertNotIn("Doğal gaz piyasasında", (site.uret(self.con) / "d/20261031-2.html").read_text(encoding="utf-8"))
+        self.con.execute("UPDATE duzenlemeler SET metin_kaynagi=NULL WHERE id='eskiler/20261031-2'")
+        self.con.commit()
+        with mock.patch.object(config, "OTOMATIK_YAYIN", False):
+            self.assertNotIn("Doğal gaz piyasasında",
+                             (site.uret(self.con) / "d/20261031-2.html").read_text(encoding="utf-8"))
+
     def test_testte_yayin_kapali(self):
         self.assertEqual(config.YAYIN_HEDEF, "")
         self.assertFalse(yayinla.yayinla(zorla=True))
