@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://buraksefa.github.io/resmi-gazete-ozeti/sitemap.xml
